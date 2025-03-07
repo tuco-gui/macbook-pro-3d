@@ -1,12 +1,83 @@
-# React + Vite
+# MacBook Pro 3D Showcase  
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A sleek and interactive landing page featuring a 3D MacBook Pro model, built using **React**, **Three.js**, and **React Three Fiber**. This project offers smooth animations, realistic rendering, and a fully responsive layout.
 
-Currently, two official plugins are available:
+## 🌐 Live Demo  
+🔗 [MacBook Pro 3D](https://macbook-pro-3d.vercel.app/)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## 🚀 Features  
+- **3D MacBook Model** – Rendered with Three.js  
+- **Realistic Lighting & Shadows** – HDRI environment  
+- **Scroll Animations** – MacBook rotates on scroll  
+- **Responsive Design** – Mobile-friendly with drawer navigation  
+- **Optimized Performance** – Lightweight and smooth  
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 🛠️ Technologies Used  
+- **React** – Component-based UI  
+- **Three.js** – 3D Graphics  
+- **React Three Fiber** – Three.js in React  
+- **TailwindCSS & DaisyUI** – Modern styling  
+
+---
+
+## 🛠️ Installation & Setup  
+Clone the repository:  
+```bash
+git clone https://github.com/your-username/macbook-pro-3d.git
+cd macbook-pro-3d
+```
+Install dependencies:  
+```bash
+npm install
+```
+Start the development server:  
+```bash
+npm run dev
+```
+
+---
+
+## 📌 Folder Structure  
+```
+macbook-pro-3d/
+│── public/               # Static assets
+│── src/
+│   ├── components/       # UI components
+│   ├── assets/           # Textures & images
+│   ├── App.jsx           # Main app file
+│   └── main.jsx          # React entry point
+│── package.json
+│── README.md
+```
+
+---
+
+## 🎨 Customization  
+- Replace the `.glb` file in `public/` to use a different 3D model.  
+- Modify colors, fonts, and animations in `style.css`.  
+
+---
+
+## 🎯 Future Enhancements  
+- ✅ Interactive model controls  
+- ✅ Additional lighting effects  
+- ✅ More customization options  
+
+---
+
+## 🙌 Contributing  
+Contributions are welcome! Fork the repo, make changes, and submit a pull request.  
+
+---
+
+## 📄 License  
+This project is licensed under the **MIT License**.  
+
+---
+
+🌟 **Star this repository** if you found it useful! 🚀
+
