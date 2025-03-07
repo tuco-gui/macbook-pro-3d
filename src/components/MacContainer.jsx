@@ -1,12 +1,12 @@
 import { useScroll, useGLTF, useTexture } from "@react-three/drei";
-import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useState } from "react";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from 'three';
+import { useState, useEffect } from "react";
 
 const MacContainer = () => {
     let model = useGLTF("./mac.glb");
     let tex = useTexture('./red.jpg');
-
+    
     let meshes = {};
     model.scene.traverse((elem) => {
         meshes[elem.name] = elem;
@@ -19,25 +19,29 @@ const MacContainer = () => {
     meshes.matte.material.roughness = 1;
 
     let data = useScroll();
-    const { viewport } = useThree();
-    const [scaleFactor, setScaleFactor] = useState(1);
-
-    useEffect(() => {
-        if (viewport.width < 6) {
-            setScaleFactor(0.5);
-        } else if (viewport.width < 10) {
-            setScaleFactor(0.8);
-        } else {
-            setScaleFactor(1);
-        }
-    }, [viewport.width]);
 
     useFrame(() => {
-        meshes.screen.rotation.x = THREE.MathUtils.degToRad(180 - data.offset * 90);
+        meshes.screen.rotation.x = THREE.MathUtils.degToRad(180 - data.offset * 90)
     });
 
+    const [modelScale, setModelScale] = useState(1);
+
+    useEffect(() => {
+        const updateScale = () => {
+            if (window.innerWidth < 768) {
+                setModelScale(0.7);
+            } else {
+                setModelScale(1); 
+            }
+        };
+
+        updateScale();
+        window.addEventListener("resize", updateScale);
+        return () => window.removeEventListener("resize", updateScale);
+    }, []);
+
     return (
-        <group position={[0, -10, 20]} scale={[scaleFactor, scaleFactor, scaleFactor]}>
+        <group position={[0, -10, 20]} scale={[modelScale, modelScale, modelScale]}>
             <primitive object={model.scene} />
         </group>
     );
