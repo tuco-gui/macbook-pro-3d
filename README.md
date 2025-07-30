@@ -27,7 +27,7 @@ A sleek and interactive landing page featuring a 3D MacBook Pro model, built usi
 ## 🛠️ Installation & Setup  
 Clone the repository:  
 ```bash
-git clone https://github.com/your-username/macbook-pro-3d.git
+git clone https://github.com/ExploitEngineer/macbook-pro-3d.git
 cd macbook-pro-3d
 ```
 Install dependencies:  
