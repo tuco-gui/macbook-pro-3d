@@ -1,37 +1,75 @@
+// src/App.jsx
+import React, { Suspense } from 'react';
 import './assets/css/style.css';
-import Header from './components/Header';
-import MacBook3DSection from './components/MacBook3DSection';
+import { Canvas } from '@react-three/fiber';
+import { Environment, ScrollControls, Html } from '@react-three/drei';
+import MacContainer from './components/MacContainer';
+
+const MENU = ['Informações', 'Custo de Frete', 'Dúvidas', 'Preços'];
 
 export default function App() {
   return (
-    <div className="bg-black text-white">
-      <Header />
+    <div className="relative w-full h-screen bg-black font-mono">
+      {/* NAV FIXO (um só) */}
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-5">
+        <img
+          src="/logovenuccepreto.png"
+          alt="logo"
+          className="h-7 w-auto select-none pointer-events-none"
+        />
 
-      <main className="pt-24">
-        {/* 1ª sessão (hero) – imagem estática à direita */}
-        <section className="min-h-[80vh] grid md:grid-cols-2 items-center gap-8 max-w-7xl mx-auto px-6">
-          <div>
-            <h1 className="text-7xl font-extrabold tracking-tight">MACBOOK</h1>
-            <span className="inline-flex mt-4 px-4 py-2 rounded-xl border border-white/60 text-xl font-bold">PRO</span>
-            <p className="mt-6 text-lg text-white/70">Desempenho de estúdio. Portabilidade de todos os dias.</p>
-            <a className="btn btn-success mt-8 rounded-xl">COMPRAR AGORA</a>
-          </div>
-          <div className="relative">
-            <img src="/m4-hero.png" alt="MacBook" className="w-full h-auto object-contain" />
-          </div>
-        </section>
+        <ul className="hidden md:flex items-center gap-10 text-white font-semibold">
+          {MENU.map((item) => (
+            <li key={item}>
+              <a href="#" className="hover:opacity-80 transition-opacity">
+                {item}
+              </a>
+            </li>
+          ))}
+        </ul>
 
-        {/* 2ª, 3ª sessões (placeholders) */}
-        <section id="info" className="py-24 max-w-7xl mx-auto px-6">Informações (placeholder)</section>
-        <section id="frete" className="py-24 max-w-7xl mx-auto px-6">Custo de Frete (placeholder)</section>
-        <section id="duvidas" className="py-24 max-w-7xl mx-auto px-6">Dúvidas (placeholder)</section>
+        <a
+          href="#contato"
+          className="rounded-full bg-emerald-500 text-black font-bold px-5 py-2 hover:brightness-95 transition"
+        >
+          contato
+        </a>
+      </nav>
 
-        {/* 4ª sessão – 3D original */}
-        <MacBook3DSection />
-
-        <section id="precos" className="py-24 max-w-7xl mx-auto px-6">Preços (placeholder)</section>
-        <section id="contato" className="py-24 max-w-7xl mx-auto px-6">Contato (placeholder)</section>
-      </main>
+      {/* 3D TRANSPARENTE + FALLBACK */}
+      <Canvas
+        camera={{ fov: 20, position: [0, -10, 180] }}
+        gl={{ antialias: true, alpha: true }}
+        className="!bg-transparent absolute inset-0"
+      >
+        <Suspense
+          fallback={
+            <Html center>
+              <div
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 9999,
+                  background: 'rgba(255,255,255,0.08)',
+                  backdropFilter: 'blur(6px)',
+                  color: '#fff',
+                  fontWeight: 700,
+                }}
+              >
+                carregando 3D…
+              </div>
+            </Html>
+          }
+        >
+          <Environment
+            files={[
+              'https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/studio_small_09_4k.exr',
+            ]}
+          />
+          <ScrollControls pages={3}>
+            <MacContainer />
+          </ScrollControls>
+        </Suspense>
+      </Canvas>
     </div>
   );
 }
