@@ -1,50 +1,44 @@
-import { useScroll, useGLTF, useTexture } from "@react-three/drei";
+import { useGLTF, useTexture } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import * as THREE from 'three';
-import { useState, useEffect } from "react";
+import * as THREE from "three";
+import { useMemo, useRef } from "react";
 
-const MacContainer = () => {
-    let model = useGLTF("./mac.glb");
-    let tex = useTexture('./red.jpg');
-    
-    let meshes = {};
-    model.scene.traverse((elem) => {
-        meshes[elem.name] = elem;
-    });
+export default function MacContainer() {
+  const { scene } = useGLTF("/mac.glb");
+  const tex = useTexture("/m4-hero.png"); // use /red.jpg se preferir
 
-    meshes.screen.rotation.x = THREE.MathUtils.degToRad(180);
+  // mapeia meshes 1x
+  const meshes = useMemo(() => {
+    const m = {};
+    scene.traverse((e) => (m[e.name] = e));
+    return m;
+  }, [scene]);
+
+  // aplica materiais uma vez
+  if (meshes.matte?.material) {
     meshes.matte.material.map = tex;
     meshes.matte.material.emissiveIntensity = 0;
     meshes.matte.material.metalness = 0;
     meshes.matte.material.roughness = 1;
+    meshes.matte.material.needsUpdate = true;
+  }
 
-    let data = useScroll();
+  // garante tela “fechada” num ângulo natural e sem animação de scroll
+  if (meshes.screen) {
+    meshes.screen.rotation.x = THREE.MathUtils.degToRad(175);
+  }
 
-    useFrame(() => {
-        meshes.screen.rotation.x = THREE.MathUtils.degToRad(180 - data.offset * 90)
-    });
+  const group = useRef();
 
-    const [modelScale, setModelScale] = useState(1);
+  // leve “idle” para dar vida (bem sutil)
+  useFrame((_, dt) => {
+    if (group.current) group.current.rotation.y += dt * 0.05;
+  });
 
-    useEffect(() => {
-        const updateScale = () => {
-            if (window.innerWidth < 768) {
-                setModelScale(0.7);
-            } else {
-                setModelScale(1); 
-            }
-        };
-
-        updateScale();
-        window.addEventListener("resize", updateScale);
-        return () => window.removeEventListener("resize", updateScale);
-    }, []);
-
-    return (
-        <group position={[0, -10, 20]} scale={[modelScale, modelScale, modelScale]}>
-            <primitive object={model.scene} />
-        </group>
-    );
-};
-
-export default MacContainer;
+  return (
+    <group ref={group} position={[0, -0.8, 0]} scale={[1.1, 1.1, 1.1]}>
+      <primitive object={scene} />
+    </group>
+  );
+}
+useGLTF.preload("/mac.glb");
