@@ -1,4 +1,3 @@
-@@ -0,0 +1,54 @@
 import React from 'react';
 import './assets/css/style.css';
 import { Canvas } from '@react-three/fiber';
@@ -51,7 +50,5 @@ const App = () => {
         </div>
     );
 };
-
-export default App;
 
 export default App;
