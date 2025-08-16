@@ -1,70 +1,65 @@
-import { useGLTF, useTexture, useScroll } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
-import { useEffect, useMemo, useRef, useState } from 'react';
-
-THREE.ColorManagement.enabled = true;
+// src/components/MacContainer.jsx
+import * as THREE from 'three'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { useGLTF, useTexture } from '@react-three/drei'
 
 export default function MacContainer() {
-  // Lendo do /public
-  const model = useGLTF('/mac.glb');
-  const lidTex = useTexture('/red.jpg');      // tampo com “logo”
-  const screenTex = useTexture('/m4-hero.png'); // imagem da tela
-  screenTex.flipY = false;
+  // IMPORTANTE: depois de renomear o arquivo no /public
+  const { scene: raw } = useGLTF('/mac_v2.glb') // ou '/mac.glb?v=2'
+  const wallpaper = useTexture('/m4-hero.png')   // confirme que este arquivo está em /public
 
-  const group = useRef();
-  const scroll = useScroll();
+  // clona a cena e os materiais para não herdar alterações antigas do cache
+  const scene = useMemo(() => {
+    const clone = raw.clone(true)
+    clone.traverse((o) => {
+      if (o.isMesh && o.material) o.material = o.material.clone()
+    })
 
-  // Achar as partes por nome (robusto p/ variações)
-  const { screen, matte } = useMemo(() => {
-    let screen, matte;
-    model.scene.traverse((o) => {
-      if (!o.isMesh) return;
-      const n = o.name.toLowerCase();
-      if (!screen && (n.includes('screen') || n.includes('display'))) screen = o;
-      if (!matte && (n.includes('matte') || n.includes('lid') || n.includes('back') || n.includes('top'))) matte = o;
-      o.castShadow = o.receiveShadow = true;
-    });
-    return { screen, matte };
-  }, [model]);
-
-  // aplica materiais exatamente como no projeto original
-  useEffect(() => {
-    if (matte?.material) {
-      matte.material.map = lidTex;
-      matte.material.emissiveIntensity = 0;
-      matte.material.metalness = 0;
-      matte.material.roughness = 1;
-      matte.material.needsUpdate = true;
+    // tela emissiva
+    const screen =
+      clone.getObjectByName('screen') || clone.getObjectByName('Screen')
+    if (screen && wallpaper) {
+      wallpaper.flipY = false
+      const mat = new THREE.MeshBasicMaterial({
+        map: wallpaper,
+        toneMapped: false,
+      })
+      screen.material = mat
+      screen.rotation.x = THREE.MathUtils.degToRad(180) // começa fechado
     }
+    return clone
+  }, [raw, wallpaper])
+
+  // anima a abertura da tampa
+  const target = useRef(THREE.MathUtils.degToRad(110))
+  useFrame((_, dt) => {
+    const screen =
+      scene.getObjectByName('screen') || scene.getObjectByName('Screen')
     if (screen) {
-      screen.material = new THREE.MeshBasicMaterial({ map: screenTex, toneMapped: false });
-      // posição inicial: fechado (igual ao original)
-      screen.rotation.x = THREE.MathUtils.degToRad(180);
+      screen.rotation.x = THREE.MathUtils.lerp(
+        screen.rotation.x,
+        target.current,
+        1 - Math.pow(0.001, dt)
+      )
     }
-  }, [matte, screen, lidTex, screenTex]);
+  })
 
-  // animação de abrir com o scroll (igual ao original)
-  useFrame(() => {
-    if (screen) {
-      screen.rotation.x = THREE.MathUtils.degToRad(180 - scroll.offset * 90);
-    }
-  });
-
-  // responsivo (igual ao que você tinha)
-  const [modelScale, setModelScale] = useState(1);
+  // responsivo
+  const [s, setS] = useState(1)
   useEffect(() => {
-    const updateScale = () => setModelScale(window.innerWidth < 768 ? 0.7 : 1);
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
+    const update = () => setS(window.innerWidth < 768 ? 0.7 : 1)
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
 
   return (
-    <group ref={group} position={[0, -10, 20]} scale={[modelScale, modelScale, modelScale]}>
-      <primitive object={model.scene} />
+    <group position={[0, -10, 20]} scale={[s, s, s]}>
+      <primitive object={scene} />
     </group>
-  );
+  )
 }
 
-useGLTF.preload('/mac.glb');
+// opcional: pré-carrega
+useGLTF.preload('/mac_v2.glb') // ou '/mac.glb?v=2'
