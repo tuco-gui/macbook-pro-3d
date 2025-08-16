@@ -1,37 +1,68 @@
+// src/App.jsx
+import React, { Suspense } from 'react';
 import './assets/css/style.css';
-import Header from './components/Header';
-import MacBook3DSection from './components/MacBook3DSection';
+import { Canvas } from '@react-three/fiber';
+import { Environment, ScrollControls, Loader } from '@react-three/drei';
+import MacContainer from './components/MacContainer';
 
-export default function App() {
+const App = () => {
   return (
-    <div className="bg-black text-white">
-      <Header />
+    <div className="relative w-full h-screen font-mono">
 
-      <main className="pt-24">
-        {/* 1ª sessão (hero) – imagem estática à direita */}
-        <section className="min-h-[80vh] grid md:grid-cols-2 items-center gap-8 max-w-7xl mx-auto px-6">
-          <div>
-            <h1 className="text-7xl font-extrabold tracking-tight">MACBOOK</h1>
-            <span className="inline-flex mt-4 px-4 py-2 rounded-xl border border-white/60 text-xl font-bold">PRO</span>
-            <p className="mt-6 text-lg text-white/70">Desempenho de estúdio. Portabilidade de todos os dias.</p>
-            <a className="btn btn-success mt-8 rounded-xl">COMPRAR AGORA</a>
-          </div>
-          <div className="relative">
-            <img src="/m4-hero.png" alt="MacBook" className="w-full h-auto object-contain" />
-          </div>
-        </section>
+      {/* NAV (desktop) */}
+      <nav className="hidden md:flex absolute gap-8 sm:gap-6 md:gap-10 lg:gap-12 top-0 left-1/2 -translate-x-1/2 py-5 sm:py-8 md:py-10 text-center z-20">
+        {["store", "mac", "ipad", "iphone", "watch", "vision", "airPods", "accessories", "support"].map((elem, key) => (
+          <a key={key} href="#" className="text-white font-bold text-sm sm:text-base md:text-lg capitalize">
+            {elem}
+          </a>
+        ))}
+      </nav>
 
-        {/* 2ª, 3ª sessões (placeholders) */}
-        <section id="info" className="py-24 max-w-7xl mx-auto px-6">Informações (placeholder)</section>
-        <section id="frete" className="py-24 max-w-7xl mx-auto px-6">Custo de Frete (placeholder)</section>
-        <section id="duvidas" className="py-24 max-w-7xl mx-auto px-6">Dúvidas (placeholder)</section>
+      {/* NAV (mobile - drawer) */}
+      <div className="md:hidden absolute top-5 left-5 z-20">
+        <label htmlFor="menu-drawer" className="btn btn-circle btn-ghost text-white text-2xl">
+          ☰
+        </label>
+      </div>
 
-        {/* 4ª sessão – 3D original */}
-        <MacBook3DSection />
+      <input type="checkbox" id="menu-drawer" className="drawer-toggle hidden" />
+      <div className="drawer-side z-30">
+        <label htmlFor="menu-drawer" className="drawer-overlay"></label>
+        <ul className="menu p-4 w-64 bg-gray-900 text-white min-h-full">
+          {["store", "mac", "ipad", "iphone", "watch", "vision", "airPods", "accessories", "support"].map((elem, key) => (
+            <li key={key} className="py-2">
+              <a href="#" className="text-white font-bold text-lg capitalize">{elem}</a>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-        <section id="precos" className="py-24 max-w-7xl mx-auto px-6">Preços (placeholder)</section>
-        <section id="contato" className="py-24 max-w-7xl mx-auto px-6">Contato (placeholder)</section>
-      </main>
+      {/* HERO TEXT */}
+      <div className="absolute flex flex-col items-center top-32 sm:top-36 md:top-40 left-1/2 -translate-x-1/2 text-white text-center w-11/12 sm:w-3/4 z-10">
+        <h3 className="masked text-5xl sm:text-6xl md:text-7xl tracking-tighter font-semibold mb-2">macbook pro.</h3>
+        <h5 className="font-extrabold text-sm sm:text-base md:text-lg mb-3">Oh so pro !</h5>
+        <p className="w-full sm:w-3/4">Lorem ipsum dolor sit amet consectetur adipisicing elit. Sed, omnis!</p>
+      </div>
+
+      {/* 3D SCENE */}
+      <Suspense fallback={null}>
+        <Canvas camera={{ fov: 20, position: [0, -10, 180] }}>
+          <ambientLight intensity={0.5} />
+          <Environment
+            files={[
+              'https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/studio_small_09_4k.exr',
+            ]}
+          />
+          <ScrollControls pages={3}>
+            <MacContainer />
+          </ScrollControls>
+        </Canvas>
+        {/* Loader evita “tela preta” enquanto o GLB baixa */}
+        <Loader />
+      </Suspense>
     </div>
   );
-}
+};
+
+export default App;
+
