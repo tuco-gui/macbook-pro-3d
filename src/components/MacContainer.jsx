@@ -1,44 +1,40 @@
-import { useGLTF, useTexture } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
-import * as THREE from "three";
-import { useMemo, useRef } from "react";
+import { useGLTF, useTexture } from '@react-three/drei';
+import { useMemo } from 'react';
+import * as THREE from 'three';
 
 export default function MacContainer() {
-  const { scene } = useGLTF("/mac.glb");
-  const tex = useTexture("/m4-hero.png"); // use /red.jpg se preferir
+  // IMPORTANTe: como está em /public, use caminho absoluto
+  const model = useGLTF('/mac.glb');
+  const tex = useTexture('/red.jpg');
 
-  // mapeia meshes 1x
-  const meshes = useMemo(() => {
-    const m = {};
-    scene.traverse((e) => (m[e.name] = e));
-    return m;
-  }, [scene]);
+  // Ajuste de materiais/nomes com segurança (sem quebrar se o nome mudar)
+  useMemo(() => {
+    const meshes = {};
+    model.scene.traverse((obj) => (meshes[obj.name] = obj));
 
-  // aplica materiais uma vez
-  if (meshes.matte?.material) {
-    meshes.matte.material.map = tex;
-    meshes.matte.material.emissiveIntensity = 0;
-    meshes.matte.material.metalness = 0;
-    meshes.matte.material.roughness = 1;
-    meshes.matte.material.needsUpdate = true;
-  }
+    // Tela: manter virada para frente
+    if (meshes.screen) {
+      meshes.screen.rotation.x = THREE.MathUtils.degToRad(180);
+    }
 
-  // garante tela “fechada” num ângulo natural e sem animação de scroll
-  if (meshes.screen) {
-    meshes.screen.rotation.x = THREE.MathUtils.degToRad(175);
-  }
+    // Acabamento (matte) com textura
+    if (meshes.matte && meshes.matte.material) {
+      const m = meshes.matte.material;
+      m.map = tex;
+      m.emissiveIntensity = 0;
+      m.metalness = 0;
+      m.roughness = 1;
+      m.needsUpdate = true;
+    }
+  }, [model, tex]);
 
-  const group = useRef();
-
-  // leve “idle” para dar vida (bem sutil)
-  useFrame((_, dt) => {
-    if (group.current) group.current.rotation.y += dt * 0.05;
-  });
-
+  // Escala/posição pensadas para a câmera em [0,0,4.2]
   return (
-    <group ref={group} position={[0, -0.8, 0]} scale={[1.1, 1.1, 1.1]}>
-      <primitive object={scene} />
+    <group position={[0, -0.35, 0]} scale={[1.15, 1.15, 1.15]}>
+      <primitive object={model.scene} />
     </group>
   );
 }
-useGLTF.preload("/mac.glb");
+
+// Pré-carregar para evitar piscadas
+useGLTF.preload('/mac.glb');
