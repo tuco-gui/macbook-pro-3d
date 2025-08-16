@@ -1,110 +1,64 @@
-import { useGLTF, useTexture, useScroll } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
-import * as THREE from "three";
-import { useEffect, useMemo, useState } from "react";
+import { useGLTF, useTexture, useScroll } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
+import { useEffect, useMemo, useRef } from 'react';
 
-const SCREEN_IMAGE_PATH = "/m4-hero.png";        // imagem que aparece na tela
-const BODY_TEXTURE_PATH  = "/red.jpg";           // textura do alumínio (a que você já tinha)
-const APPLE_LOGO_PATH    = "/logovenucepreto.png"; // se o nome do seu arquivo for outro, mude aqui
+THREE.ColorManagement.enabled = true;
 
 export default function MacContainer() {
-  // carrega o modelo
-  const { scene } = useGLTF("/mac.glb");
+  // Se seus arquivos estiverem em /public, trocar para '/mac.glb' e '/m4-hero.png'.
+  const model = useGLTF('./mac.glb');
+  const screenTex = useTexture('./m4-hero.png');
+  screenTex.flipY = false;
 
-  // carrega texturas
-  const screenTex = useTexture(SCREEN_IMAGE_PATH);
-  const bodyTex   = useTexture(BODY_TEXTURE_PATH);
-  const logoTex   = useTexture(APPLE_LOGO_PATH);
+  const group = useRef();
+  const scroll = useScroll();
 
-  // ajustes de textura
-  screenTex.flipY = false; // para não ficar invertida na tela
-  logoTex && (logoTex.flipY = false);
+  // encontra as partes certas do modelo por nome
+  const { screenMesh, lidMesh, baseMesh } = useMemo(() => {
+    let screenMesh, lidMesh, baseMesh;
+    model.scene.traverse((o) => {
+      if (!o.isMesh) return;
+      const n = o.name.toLowerCase();
+      if (!screenMesh && (n.includes('screen') || n.includes('display'))) screenMesh = o;
+      if (!lidMesh && (n.includes('lid') || n.includes('top') || n.includes('back') || n.includes('matte'))) lidMesh = o;
+      if (!baseMesh && (n.includes('base') || n.includes('bottom'))) baseMesh = o;
+      o.castShadow = o.receiveShadow = true;
+    });
+    return { screenMesh, lidMesh, baseMesh };
+  }, [model]);
 
-  // mapeia meshes por nome
-  const meshes = useMemo(() => {
-    const map = {};
-    scene.traverse((o) => { if (o.isMesh) map[o.name] = o; });
-    return map;
-  }, [scene]);
-
-  // tenta encontrar por fallback se os nomes não forem exatamente iguais
-  const screenMesh =
-    meshes.screen ||
-    Object.values(meshes).find((m) => /screen|display|lcd/i.test(m.name));
-
-  const bodyMesh =
-    meshes.matte ||
-    Object.values(meshes).find((m) => /matte|body|lid|top/i.test(m.name));
-
-  const appleMesh =
-    meshes.apple ||
-    meshes.logo ||
-    Object.values(meshes).find((m) => /apple|logo/i.test(m.name));
-
-  // aplica materiais/tex assim que o modelo existir
   useEffect(() => {
-    // corpo/lid
-    if (bodyMesh) {
-      bodyMesh.material.map = bodyTex;
-      bodyMesh.material.metalness = 0;
-      bodyMesh.material.roughness = 1;
-      bodyMesh.material.emissiveIntensity = 0;
-      bodyMesh.material.needsUpdate = true;
-    }
-
-    // tela “acesa”
+    // material "aceso" na tela
     if (screenMesh) {
       screenMesh.material = new THREE.MeshBasicMaterial({
         map: screenTex,
-        toneMapped: false, // deixa brilhante, sem ficar “lavado”
+        toneMapped: false,
       });
-      screenMesh.material.needsUpdate = true;
-      // mantém o eixo correto (modelo veio com 180° fechado)
-      if (screenMesh.rotation.x === 0) {
-        screenMesh.rotation.x = THREE.MathUtils.degToRad(180);
-      }
     }
-
-    // logo da Apple (se o modelo tiver um mesh do logo)
-    if (appleMesh) {
-      // se houver textura de logo, usa; senão deixa branco
-      if (logoTex) {
-        appleMesh.material = new THREE.MeshBasicMaterial({
-          map: logoTex,
-          transparent: true,
-          toneMapped: false,
-        });
-      } else {
-        appleMesh.material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    // acabamento do corpo
+    [lidMesh, baseMesh].forEach((m) => {
+      if (m?.material) {
+        m.material.metalness = 0.4;
+        m.material.roughness = 0.8;
+        m.material.emissiveIntensity = 0;
       }
-      appleMesh.renderOrder = 10;
-      appleMesh.material.needsUpdate = true;
-    }
-  }, [bodyMesh, screenMesh, appleMesh, bodyTex, screenTex, logoTex]);
+    });
+  }, [screenMesh, lidMesh, baseMesh, screenTex]);
 
-  // abre/fecha com o scroll (0 = fechado | 1 = ~90° aberto)
-  const data = useScroll();
   useFrame(() => {
-    if (screenMesh) {
-      const base = 180;      // fechado
-      const open = 90;       // abertura alvo
-      const angle = base - data.offset * (base - open);
-      screenMesh.rotation.x = THREE.MathUtils.degToRad(angle);
+    // abre a tampa com o scroll (de 180º fechado até ~25º)
+    const openDeg = THREE.MathUtils.lerp(180, 25, Math.min(scroll.offset * 1.2, 1));
+    if (screenMesh?.parent) {
+      screenMesh.parent.rotation.x = THREE.MathUtils.degToRad(openDeg);
     }
   });
 
-  // escala responsiva igual você tinha
-  const [modelScale, setModelScale] = useState(1);
-  useEffect(() => {
-    const update = () => setModelScale(window.innerWidth < 768 ? 0.7 : 1);
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
   return (
-    <group position={[0, -10, 20]} scale={[modelScale, modelScale, modelScale]}>
-      <primitive object={scene} />
+    <group ref={group} position={[0, -10, 20]} scale={[1, 1, 1]}>
+      <primitive object={model.scene} />
     </group>
   );
 }
+
+useGLTF.preload('./mac.glb');
