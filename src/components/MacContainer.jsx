@@ -1,64 +1,70 @@
 import { useGLTF, useTexture, useScroll } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 THREE.ColorManagement.enabled = true;
 
 export default function MacContainer() {
-  // Se seus arquivos estiverem em /public, trocar para '/mac.glb' e '/m4-hero.png'.
-  const model = useGLTF('./mac.glb');
-  const screenTex = useTexture('./m4-hero.png');
+  // Lendo do /public
+  const model = useGLTF('/mac.glb');
+  const lidTex = useTexture('/red.jpg');      // tampo com “logo”
+  const screenTex = useTexture('/m4-hero.png'); // imagem da tela
   screenTex.flipY = false;
 
   const group = useRef();
   const scroll = useScroll();
 
-  // encontra as partes certas do modelo por nome
-  const { screenMesh, lidMesh, baseMesh } = useMemo(() => {
-    let screenMesh, lidMesh, baseMesh;
+  // Achar as partes por nome (robusto p/ variações)
+  const { screen, matte } = useMemo(() => {
+    let screen, matte;
     model.scene.traverse((o) => {
       if (!o.isMesh) return;
       const n = o.name.toLowerCase();
-      if (!screenMesh && (n.includes('screen') || n.includes('display'))) screenMesh = o;
-      if (!lidMesh && (n.includes('lid') || n.includes('top') || n.includes('back') || n.includes('matte'))) lidMesh = o;
-      if (!baseMesh && (n.includes('base') || n.includes('bottom'))) baseMesh = o;
+      if (!screen && (n.includes('screen') || n.includes('display'))) screen = o;
+      if (!matte && (n.includes('matte') || n.includes('lid') || n.includes('back') || n.includes('top'))) matte = o;
       o.castShadow = o.receiveShadow = true;
     });
-    return { screenMesh, lidMesh, baseMesh };
+    return { screen, matte };
   }, [model]);
 
+  // aplica materiais exatamente como no projeto original
   useEffect(() => {
-    // material "aceso" na tela
-    if (screenMesh) {
-      screenMesh.material = new THREE.MeshBasicMaterial({
-        map: screenTex,
-        toneMapped: false,
-      });
+    if (matte?.material) {
+      matte.material.map = lidTex;
+      matte.material.emissiveIntensity = 0;
+      matte.material.metalness = 0;
+      matte.material.roughness = 1;
+      matte.material.needsUpdate = true;
     }
-    // acabamento do corpo
-    [lidMesh, baseMesh].forEach((m) => {
-      if (m?.material) {
-        m.material.metalness = 0.4;
-        m.material.roughness = 0.8;
-        m.material.emissiveIntensity = 0;
-      }
-    });
-  }, [screenMesh, lidMesh, baseMesh, screenTex]);
+    if (screen) {
+      screen.material = new THREE.MeshBasicMaterial({ map: screenTex, toneMapped: false });
+      // posição inicial: fechado (igual ao original)
+      screen.rotation.x = THREE.MathUtils.degToRad(180);
+    }
+  }, [matte, screen, lidTex, screenTex]);
 
+  // animação de abrir com o scroll (igual ao original)
   useFrame(() => {
-    // abre a tampa com o scroll (de 180º fechado até ~25º)
-    const openDeg = THREE.MathUtils.lerp(180, 25, Math.min(scroll.offset * 1.2, 1));
-    if (screenMesh?.parent) {
-      screenMesh.parent.rotation.x = THREE.MathUtils.degToRad(openDeg);
+    if (screen) {
+      screen.rotation.x = THREE.MathUtils.degToRad(180 - scroll.offset * 90);
     }
   });
 
+  // responsivo (igual ao que você tinha)
+  const [modelScale, setModelScale] = useState(1);
+  useEffect(() => {
+    const updateScale = () => setModelScale(window.innerWidth < 768 ? 0.7 : 1);
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
+
   return (
-    <group ref={group} position={[0, -10, 20]} scale={[1, 1, 1]}>
+    <group ref={group} position={[0, -10, 20]} scale={[modelScale, modelScale, modelScale]}>
       <primitive object={model.scene} />
     </group>
   );
 }
 
-useGLTF.preload('./mac.glb');
+useGLTF.preload('/mac.glb');
