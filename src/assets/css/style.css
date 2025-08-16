@@ -37,3 +37,5 @@
     filter: blur(10px);
     opacity: 0.8;
 }
+html, body, #root { height: 100%; }
+body { background:#000; overflow-x:hidden; }
