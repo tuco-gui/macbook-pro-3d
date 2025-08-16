@@ -1,24 +1,23 @@
-import React from "react";
-
-// novo menu e novo hero
+import React, { Suspense, lazy } from "react";
 import NavbarLP from "./components/NavbarLP";
 import HeroLP from "./components/HeroLP";
 
-// NÃO MEXE NO 3D – usa o que você já tem
-import MacContainer from "./components/MacContainer";
+// Carrega o 3D só depois, sem travar o resto
+const MacContainer = lazy(() => import("./components/MacContainer"));
 
 export default function App() {
   return (
-    <div className="min-h-screen w-full bg-black text-white">
+    <div className="min-h-screen w-full bg-black text-white" id="top">
       <NavbarLP />
-
-      {/* PRIMEIRA SESSÃO (hero) */}
       <HeroLP />
 
-      {/* SESSÃO 3D (inalterada) */}
-      <section id="mac-3d" className="w-full">
-        <MacContainer />
+      {/* SESSÃO 3D – fica abaixo do hero */}
+      <section id="mac-3d" className="relative z-0 w-full">
+        <Suspense fallback={null}>
+          <MacContainer />
+        </Suspense>
       </section>
     </div>
   );
 }
+
