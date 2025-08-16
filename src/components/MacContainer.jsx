@@ -6,7 +6,7 @@ import { useGLTF, useTexture } from '@react-three/drei'
 
 export default function MacContainer() {
   // IMPORTANTE: depois de renomear o arquivo no /public
-  const { scene: raw } = useGLTF('/mac_v2.glb') // ou '/mac.glb?v=2'
+  const { scene: raw } = useGLTF('/mac.glb') // ou '/mac.glb?v=2'
   const wallpaper = useTexture('/m4-hero.png')   // confirme que este arquivo está em /public
 
   // clona a cena e os materiais para não herdar alterações antigas do cache
