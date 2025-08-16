@@ -6,7 +6,6 @@ export default function HeroLP() {
       id="hero"
       className="relative z-10 mx-auto mt-20 max-w-7xl grid grid-cols-1 gap-12 px-6 py-16 md:mt-28 md:grid-cols-2"
     >
-      {/* Texto */}
       <div className="flex flex-col justify-center">
         <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">
           <span className="block">MACBOOK</span>
@@ -30,9 +29,7 @@ export default function HeroLP() {
         </a>
       </div>
 
-      {/* Imagem estática à direita */}
       <div className="relative flex items-center justify-center">
-        {/* se o arquivo estiver no /public, use o caminho abaixo */}
         <img
           src="/m4-hero.png"
           alt="MacBook Pro"
