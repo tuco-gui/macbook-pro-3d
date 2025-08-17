@@ -47,7 +47,7 @@ export default function App() {
             Desempenho de estúdio. Portabilidade de todos os dias.
           </p>
 
-          <a
+          <
             href="#comprar"
             className="mt-8 inline-flex w-fit items-center justify-center rounded-lg bg-emerald-500 px-6 py-3 font-bold text-black hover:bg-emerald-400 transition"
           >
